@@ -6,11 +6,15 @@
 // ============================================================
 
 import { createClient } from './supabase/server'
+import { DEFAULT_NAV_MENU, type NavItem } from './nav'
+
+// Tipe menu kini didefinisikan di lib/nav.ts (aman untuk client).
+// Di-export ulang agar import lama `from '@/lib/site-content'` tetap berfungsi.
+export type { NavItem, NavChild } from './nav'
 
 export type Federation = { abbr: string; name: string }
 export type Legal = { label: string; value: string }
 export type Partner = { label: string; url: string }
-export type NavItem = { label: string; url: string; enabled: boolean }
 export type NavLink = { label: string; href: string }
 
 export type SiteContent = {
@@ -67,15 +71,7 @@ export const defaultContent: SiteContent = {
   copyrightText: '',
   footerTagline: '',
   theme: { primary: '#0a0e27', accent: '#ff5e3a' },
-  navMenu: [
-    { label: 'Beranda', url: '/#beranda', enabled: true },
-    { label: 'Tentang Kami', url: '/#tentang', enabled: true },
-    { label: 'Visi Misi', url: '/#visimisi', enabled: true },
-    { label: 'Galeri', url: '/#galeri', enabled: true },
-    { label: 'Berita', url: '/#berita', enabled: true },
-    { label: 'Database Anggota', url: '/anggota', enabled: true },
-    { label: 'Kontak', url: '/#kontak', enabled: true },
-  ],
+  navMenu: DEFAULT_NAV_MENU,
   structureDark: true,
   positionOptions: ['Ketua Umum', 'Ketua Harian', 'Sekretaris', 'Bendahara', 'Anggota'],
   categoryOptions: ['Pistol', 'Rifle', 'Shotgun', 'Lainnya'],

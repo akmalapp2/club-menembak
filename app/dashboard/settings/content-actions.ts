@@ -6,6 +6,7 @@ import {
   SITE_CONTENT_KEY,
   type SiteContent,
 } from '@/lib/site-content'
+import { MAX_NAV_ITEMS, MAX_NAV_CHILDREN, type NavChild } from '@/lib/nav'
 import { revalidatePath } from 'next/cache'
 
 export type ContentState =
@@ -89,13 +90,30 @@ export async function updateSiteContent(
     .map((p) => p.trim())
     .filter(Boolean)
 
-  // Menu navbar (maks 8 baris; baris tanpa label diabaikan)
+  // Menu navbar (maks MAX_NAV_ITEMS menu utama, masing-masing maks
+  // MAX_NAV_CHILDREN sub-menu). Menu utama sah bila berlabel DAN
+  // (punya URL ATAU punya sub-menu -> tampil sebagai dropdown).
   const navMenu: SiteContent['navMenu'] = []
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < MAX_NAV_ITEMS; i++) {
     const label = s(formData, `nav_label_${i}`)
     const url = s(formData, `nav_url_${i}`)
     const enabled = formData.get(`nav_enabled_${i}`) === 'on'
-    if (label && url) navMenu.push({ label, url, enabled })
+
+    const children: NavChild[] = []
+    for (let j = 0; j < MAX_NAV_CHILDREN; j++) {
+      const cl = s(formData, `nav_child_label_${i}_${j}`)
+      const cu = s(formData, `nav_child_url_${i}_${j}`)
+      if (cl && cu) children.push({ label: cl, url: cu })
+    }
+
+    if (label && (url || children.length)) {
+      navMenu.push({
+        label,
+        url,
+        enabled,
+        ...(children.length ? { children } : {}),
+      })
+    }
   }
 
   // Daftar jabatan & kategori (dari ListEditor, dikirim sebagai name[]).
