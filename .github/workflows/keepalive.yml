@@ -1,0 +1,48 @@
+# ============================================================
+#  KEEPALIVE SUPABASE
+#  Memanggil /api/health secara berkala agar project Supabase
+#  (versi gratis) tidak di-pause karena tidak ada aktivitas.
+#
+#  Butuh secret repo: HEALTH_URL
+#    contoh: https://club-menembak.vercel.app/api/health
+#  (GitHub -> Settings -> Secrets and variables -> Actions)
+# ============================================================
+
+name: Keepalive Supabase
+
+on:
+  schedule:
+    # Tiap 3 hari (tgl 1, 4, 7, ... 31) pukul 01:00 UTC = 10:00 WIT.
+    # Jeda terpanjang 3 hari, jauh di bawah batas pause Supabase (7 hari).
+    - cron: '0 1 */3 * *'
+  # Tombol "Run workflow" untuk uji manual dari tab Actions.
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping health endpoint
+        env:
+          HEALTH_URL: ${{ secrets.HEALTH_URL }}
+        run: |
+          if [ -z "$HEALTH_URL" ]; then
+            echo "Secret HEALTH_URL belum diisi. Tambahkan di Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+
+          # Coba hingga 3 kali (server Vercel kadang perlu 'bangun' dulu).
+          for i in 1 2 3; do
+            code=$(curl -s -o body.txt -w "%{http_code}" --max-time 30 "$HEALTH_URL" || echo "000")
+            echo "Percobaan $i: HTTP $code"
+            cat body.txt 2>/dev/null; echo
+            if [ "$code" = "200" ]; then
+              echo "Berhasil: database aktif."
+              exit 0
+            fi
+            sleep 20
+          done
+
+          echo "Gagal setelah 3 percobaan. Cek alamat HEALTH_URL dan log Vercel."
+          exit 1
